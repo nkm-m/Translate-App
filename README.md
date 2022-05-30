@@ -36,6 +36,9 @@ aws cloudformation create-stack \
 
 # 3. Describe index.js RestAPIEndpoint
 From the output of the CloudFormation console, check RestAPIEndpoint and paste it into index.js
+
+![Screenshot_1](https://user-images.githubusercontent.com/55443396/170989361-af99cf4e-f3b4-4461-ba61-cdc8536cf548.png)
+
 ```JavaScript:index.js
 function translateText() {
   const url = "{your-RestAPIEndpoint}"; // Replace this with RestAPIEndpoint
@@ -63,6 +66,8 @@ aws s3 cp ./public s3://{your-s3-bucket-name} \
 
 ## 5. Access S3BucketWebsSiteEndPoint
 Check and access S3BucketWebsSiteEndPoint from the output of the CloudFormation console
+
+![Screenshot_1 - コピー](https://user-images.githubusercontent.com/55443396/170989430-fe57da09-c14c-4a3a-a927-42bbf59f365c.png)
 
 # How to use
 Just enter the Japanese you want to translate and click the translate button.
