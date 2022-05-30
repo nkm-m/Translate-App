@@ -25,7 +25,7 @@ aws cloudformation validate-template \
 ```
 
 2-2 Create CloudFormation Stack
-```bash:awscli.sh
+```bash
 aws cloudformation create-stack \
 --stack-name Translate-App \
 --template-body file://template.yaml \
@@ -36,7 +36,7 @@ aws cloudformation create-stack \
 
 # 3. Describe index.js RestAPIEndpoint
 From the output of the CloudFormation console, check RestAPIEndpoint and paste it into index.js
-```javascript:index.js
+```JavaScript:index.js
 function translateText() {
   const url = "{your-RestAPIEndpoint}"; // Replace this with RestAPIEndpoint
   const text = document.getElementById("japanese").value;
@@ -55,7 +55,7 @@ function translateText() {
 
 ## 4. Run the awscli.sh S3 command
 Copy local files to your S3 Bucket
-```bash:awscli.sh
+```bash
 aws s3 cp ./public s3://{your-s3-bucket-name} \
 --recursive \
 {--profile your-profile-name}
