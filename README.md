@@ -71,3 +71,5 @@ Check and access S3BucketWebsSiteEndPoint from the output of the CloudFormation 
 
 # How to use
 Just enter the Japanese you want to translate and click the translate button.
+
+![modal](https://user-images.githubusercontent.com/55443396/170990219-cb7817ab-8377-431d-8057-ae8ec1806baa.gif)
