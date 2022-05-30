@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script src="index.js"></script>
+  <title>Translate App</title>
+</head>
+
+<body>
+  <div id="app">
+    <header class="header">
+      <h1>An app that translates Japanese into English and generates a URL</h1>
+    </header>
+
+    <div class="main">
+      <h3>日本語</h3>
+
+      <textarea id="japanese" class="japanese" cols="80" rows="2"></textarea>
+
+      <div>
+        <button type="button" onclick="translateText()" class="btn">翻訳</button>
+      </div>
+
+      <h3>English</h3>
+
+      <textarea id="english" class="english" cols="80" rows="2"></textarea>
+
+      <p id="err"></p>
+    </div>
+  </div>
+
+</body>
+
+</html>

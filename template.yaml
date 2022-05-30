@@ -1,0 +1,210 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "An app that translates Japanese into English and generates a URL"
+Parameters:
+  S3BucketName:
+    Type: String
+Resources:
+  IAMManagedPolicy:
+    Type: "AWS::IAM::ManagedPolicy"
+    Properties:
+      ManagedPolicyName: "TranslateTextAccessPolicy"
+      Path: "/"
+      PolicyDocument: 
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Sid": "VisualEditor0",
+                    "Effect": "Allow",
+                    "Action": "translate:TranslateText",
+                    "Resource": "*"
+                }
+            ]
+        }
+
+  IAMRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      Path: "/"
+      RoleName: "LambdaTranslateTextRole"
+      AssumeRolePolicyDocument: '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"lambda.amazonaws.com"},"Action":"sts:AssumeRole"}]}'
+      MaxSessionDuration: 3600
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        - !Ref IAMManagedPolicy
+      Description: "Allows Lambda functions to call AWS services on your behalf."
+
+  LambdaFunction:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Description: ""
+      FunctionName: "TranslateText"
+      Handler: "index.handler"
+      Code:
+        ZipFile: |
+          const AWS = require("aws-sdk");
+          AWS.config.update({ region: "ap-northeast-1" });
+          AWS.config.apiVersions = {
+            translate: "2017-07-01",
+          };
+          const translate = new AWS.Translate();
+          exports.handler = async (event) => {
+            let translatedText = "";
+            try {
+              //Amazon Translate: Japanese to English
+              const params = {
+                SourceLanguageCode: "ja" /* required */,
+                TargetLanguageCode: "en" /* required */,
+                Text: JSON.parse(event.body).text,
+              };
+              translatedText = await translate.translateText(params).promise();
+            } catch (error) {
+              console.log(error);
+            }
+
+            //toLowerCase
+            translatedText = translatedText.TranslatedText.toLowerCase();
+            console.log(translatedText);
+            //replace
+            translatedText = translatedText.replace(/'|,|\.|\?/g, "").replace(/ /g, "-");
+            console.log(translatedText);
+
+            return {
+              statusCode: 200,
+              headers: {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "OPTIONS,POST",
+              },
+              body: JSON.stringify(translatedText),
+            };
+          };
+      MemorySize: 128
+      Role: !GetAtt IAMRole.Arn
+      Runtime: "nodejs16.x"
+      Timeout: 10
+      TracingConfig:
+        Mode: "PassThrough"
+
+  LambdaPermission:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !GetAtt LambdaFunction.Arn
+      Principal: "apigateway.amazonaws.com"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/*/POST/"
+
+  ApiGatewayRestApi:
+    Type: "AWS::ApiGateway::RestApi"
+    Properties:
+      Name: "TranslateAPI"
+      ApiKeySourceType: "HEADER"
+      EndpointConfiguration:
+        Types:
+          - "REGIONAL"
+    DependsOn: LambdaFunction
+
+  ApiGatewayStage:
+    Type: "AWS::ApiGateway::Stage"
+    Properties:
+      StageName: "dev"
+      DeploymentId: !Ref ApiGatewayDeployment
+      RestApiId: !Ref ApiGatewayRestApi
+      Description: "dev"
+      CacheClusterEnabled: false
+      TracingEnabled: false
+
+  ApiGatewayDeployment:
+    Type: "AWS::ApiGateway::Deployment"
+    Properties:
+      RestApiId: !Ref ApiGatewayRestApi
+      Description: "cors enabled"
+    DependsOn: ApiGatewayMethod2
+
+  ApiGatewayMethod:
+    Type: "AWS::ApiGateway::Method"
+    Properties:
+      RestApiId: !Ref ApiGatewayRestApi
+      ResourceId: !GetAtt ApiGatewayRestApi.RootResourceId
+      HttpMethod: "OPTIONS"
+      AuthorizationType: "NONE"
+      ApiKeyRequired: false
+      RequestParameters: {}
+      MethodResponses:
+        - ResponseModels:
+            "application/json": "Empty"
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Headers": false
+            "method.response.header.Access-Control-Allow-Methods": false
+            "method.response.header.Access-Control-Allow-Origin": false
+          StatusCode: "200"
+      Integration:
+        CacheNamespace: !GetAtt ApiGatewayRestApi.RootResourceId
+        IntegrationResponses:
+          - ResponseParameters:
+              "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
+              "method.response.header.Access-Control-Allow-Origin": "'*'"
+            StatusCode: "200"
+        PassthroughBehavior: "WHEN_NO_MATCH"
+        RequestTemplates:
+          "application/json": '{"statusCode": 200}'
+        TimeoutInMillis: 29000
+        Type: "MOCK"
+
+  ApiGatewayMethod2:
+    Type: "AWS::ApiGateway::Method"
+    Properties:
+      RestApiId: !Ref ApiGatewayRestApi
+      ResourceId: !GetAtt ApiGatewayRestApi.RootResourceId
+      HttpMethod: "POST"
+      AuthorizationType: "NONE"
+      ApiKeyRequired: false
+      RequestParameters: {}
+      MethodResponses:
+        - ResponseModels:
+            "application/json": "Empty"
+          ResponseParameters:
+            "method.response.header.Access-Control-Allow-Origin": false
+          StatusCode: "200"
+      Integration:
+        CacheNamespace: !GetAtt ApiGatewayRestApi.RootResourceId
+        ContentHandling: "CONVERT_TO_TEXT"
+        IntegrationHttpMethod: "POST"
+        IntegrationResponses:
+          - ResponseParameters:
+              "method.response.header.Access-Control-Allow-Origin": "'*'"
+            StatusCode: "200"
+        PassthroughBehavior: "WHEN_NO_MATCH"
+        TimeoutInMillis: 29000
+        Type: "AWS_PROXY"
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaFunction}/invocations"
+
+
+  S3Bucket:
+      Type: "AWS::S3::Bucket"
+      DeletionPolicy: Retain
+      Properties:
+          BucketName: !Ref S3BucketName
+          WebsiteConfiguration: 
+              IndexDocument: "index.html"
+
+  S3BucketPolicy:
+      Type: "AWS::S3::BucketPolicy"
+      Properties:
+          Bucket: !Ref S3Bucket
+          PolicyDocument: 
+              Version: "2012-10-17"
+              Statement: 
+                - 
+                  Sid: "PublicReadGetObject"
+                  Effect: "Allow"
+                  Principal: "*"
+                  Action: "s3:GetObject"
+                  Resource: !Sub "arn:aws:s3:::${S3Bucket}/*"
+
+Outputs:
+  RestAPIEndpoint:
+    Value: !Sub 'https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/${ApiGatewayStage}'
+  S3BucketWebsSiteEndPoint:
+    Value: !Sub 'http://${S3Bucket}.s3-website-${AWS::Region}.${AWS::URLSuffix}'
