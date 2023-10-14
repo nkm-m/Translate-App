@@ -186,6 +186,8 @@ Resources:
       DeletionPolicy: Retain
       Properties:
           BucketName: !Ref S3BucketName
+          PublicAccessBlockConfiguration:
+            BlockPublicAcls: true
           WebsiteConfiguration: 
               IndexDocument: "index.html"
 
