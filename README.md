@@ -13,21 +13,24 @@ This web app has the following features:
 
 ## 1. Clone repository
 ```
-git clone https://github.com/nkm-m/Translate-App.git
-cd Translate-App
+$ git clone https://github.com/nkm-m/Translate-App.git
 ```
 ## 2. Run the awscli.sh CloudFormation command
 
+```
+$ cd Translate-App
+```
+
 2-1. Validate CloudFromation template
 ```bash:awscli.sh
-aws cloudformation validate-template \
+$ aws cloudformation validate-template \
 --template-body file://template.yaml \
 {--profile your-profile-name}
 ```
 
 2-2 Create CloudFormation Stack
 ```bash
-aws cloudformation create-stack \
+$ aws cloudformation create-stack \
 --stack-name Translate-App \
 --template-body file://template.yaml \
 --parameters ParameterKey=S3BucketName,ParameterValue={your-s3-bucket-name} \
@@ -60,7 +63,7 @@ function translateText() {
 ## 4. Run the awscli.sh S3 command
 Copy local files to your S3 Bucket
 ```bash
-aws s3 cp ./public s3://{your-s3-bucket-name} \
+$ aws s3 cp ./public s3://{your-s3-bucket-name} \
 --recursive \
 {--profile your-profile-name}
 ```
