@@ -13,7 +13,8 @@ This web app has the following features:
 
 ## 1. Clone repository
 ```
-git clone
+git clone https://github.com/nkm-m/Translate-App.git
+cd Translate-App
 ```
 ## 2. Run the awscli.sh CloudFormation command
 
